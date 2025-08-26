@@ -132,8 +132,36 @@ function renderGlobalTasks() {
     const topThreeContainer = document.getElementById('topThreeTasks');
     const otherTasksContainer = document.getElementById('otherTasks');
     
-    // Render top three tasks
+    // Clear containers completely
     topThreeContainer.innerHTML = '';
+    otherTasksContainer.innerHTML = '';
+    
+    // Add working drop handlers directly to containers
+    topThreeContainer.ondrop = function(e) {
+        e.preventDefault();
+        handleTaskDrop(e, 'top-three');
+    };
+    topThreeContainer.ondragover = function(e) {
+        e.preventDefault();
+        handleTaskDragOver(e);
+    };
+    topThreeContainer.ondragleave = function(e) {
+        handleTaskDragLeave(e);
+    };
+    
+    otherTasksContainer.ondrop = function(e) {
+        e.preventDefault();
+        handleTaskDrop(e, 'other');
+    };
+    otherTasksContainer.ondragover = function(e) {
+        e.preventDefault();
+        handleTaskDragOver(e);
+    };
+    otherTasksContainer.ondragleave = function(e) {
+        handleTaskDragLeave(e);
+    };
+    
+    // Render top three tasks
     topThreeTasks.forEach(taskRef => {
         const task = StorageManager.getContentItem(taskRef.projectId, 'tasks', taskRef.taskId);
         if (task) {
@@ -142,13 +170,16 @@ function renderGlobalTasks() {
         }
     });
     
-   if (topThreeTasks.length === 0) {
-    topThreeContainer.innerHTML = 'Drop your most important tasks here';
-}
+    if (topThreeTasks.length === 0) {
+        topThreeContainer.innerHTML = 'Drop your most important tasks here';
+        topThreeContainer.style.minHeight = '60px';
+        topThreeContainer.style.display = 'flex';
+        topThreeContainer.style.alignItems = 'center';
+        topThreeContainer.style.justifyContent = 'center';
+    }
     
     // Get all other tasks from all projects
     const allProjects = StorageManager.getAllProjects();
-    otherTasksContainer.innerHTML = '';
     
     Object.values(allProjects).forEach(project => {
         const tasks = Object.values(project.tasks || {});
@@ -162,12 +193,11 @@ function renderGlobalTasks() {
         });
     });
     
-   if (otherTasksContainer.children.length === 0) {
-    otherTasksContainer.innerHTML = 'All other tasks appear here';
-}
-    
-    console.log('Rendered global tasks');
-}
+    if (otherTasksContainer.children.length === 0) {
+        otherTasksContainer.innerHTML = 'All other tasks appear here';
+        otherTasksContainer.style.minHeight = '60px';
+        otherTasksContainer.style.display = 'flex';
+        otherTasksContainer.style.alignItems = 'cen
 
 function createGlobalTaskElement(task, projectId) {
     const div = document.createElement('div');
