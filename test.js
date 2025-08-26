@@ -1,14 +1,539 @@
-// test.js - Minimal JavaScript for CSS/HTML testing
-// This just makes basic UI interactions work so you can test styling
+// app.js - CopyFlow with StorageManager Integration
+// This replaces test.js with real functionality
 
-console.log('CopyFlow test mode loaded');
+console.log('CopyFlow with StorageManager loaded');
 
-// Modal Management
+// Current state
+let currentProjectId = null;
+
+// INITIALIZATION
+function initializeApp() {
+    console.log('Initializing CopyFlow...');
+    
+    // Load projects into dropdown
+    loadProjectsDropdown();
+    
+    // Load last active project or show overview
+    const lastProject = StorageManager.getUserPreferences().lastActiveProject;
+    if (lastProject && StorageManager.getProject(lastProject)) {
+        switchToProject(lastProject);
+    } else {
+        showProjectOverview();
+    }
+    
+    // Show/hide UI elements based on data
+    updateUIState();
+    
+    console.log('CopyFlow initialized');
+}
+
+// PROJECT MANAGEMENT
+
+function loadProjectsDropdown() {
+    const select = document.getElementById('projectSelect');
+    const projects = StorageManager.getAllProjects();
+    
+    // Clear existing options (except first)
+    while (select.children.length > 1) {
+        select.removeChild(select.lastChild);
+    }
+    
+    // Add projects to dropdown
+    Object.values(projects)
+        .filter(project => !project.archived) // Hide archived by default
+        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)) // Most recent first
+        .forEach(project => {
+            const option = document.createElement('option');
+            option.value = project.id;
+            option.textContent = project.name;
+            select.appendChild(option);
+        });
+    
+    // Update archive button visibility
+    const hasArchivedProjects = Object.values(projects).some(p => p.archived);
+    document.getElementById('archiveToggle').style.display = hasArchivedProjects ? 'block' : 'none';
+    
+    console.log(`Loaded ${select.children.length - 1} projects in dropdown`);
+}
+
+function showProjectOverview() {
+    currentProjectId = null;
+    
+    // Clear project selection
+    document.getElementById('projectSelect').value = '';
+    
+    // Show/hide views
+    document.getElementById('projectOverview').style.display = 'block';
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('breadcrumbContainer').style.display = 'none';
+    
+    // Hide project-specific buttons
+    document.getElementById('projectSettingsBtn').style.display = 'none';
+    
+    // Render project grid and global tasks
+    renderProjectGrid();
+    renderGlobalTasks();
+    
+    console.log('Showing project overview');
+}
+
+function renderProjectGrid() {
+    const grid = document.getElementById('projectGrid');
+    const projects = StorageManager.getAllProjects();
+    
+    grid.innerHTML = '';
+    
+    Object.values(projects)
+        .filter(project => !project.archived)
+        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+        .forEach(project => {
+            const card = createProjectCard(project);
+            grid.appendChild(card);
+        });
+    
+    console.log('Rendered project grid');
+}
+
+function createProjectCard(project) {
+    const card = document.createElement('div');
+    card.className = 'project-card';
+    card.onclick = () => switchToProject(project.id);
+    
+    // Count items
+    const counts = {
+        briefs: Object.keys(project.briefs || {}).length,
+        notes: Object.keys(project.notes || {}).length,
+        copy: Object.keys(project.copy || {}).length,
+        tasks: Object.keys(project.tasks || {}).length
+    };
+    
+    card.innerHTML = `
+        <div class="project-title">${project.name}</div>
+        <div class="project-description">${project.description || 'No description'}</div>
+        <div class="project-stats">
+            <span>${counts.briefs} briefs</span>
+            <span>${counts.notes} notes</span>
+            <span>${counts.copy} copy</span>
+            <span>${counts.tasks} tasks</span>
+        </div>
+        <div class="project-updated">Updated ${formatDate(project.updatedAt)}</div>
+    `;
+    
+    return card;
+}
+
+function renderGlobalTasks() {
+    // This will be implemented when we build the task priority system
+    console.log('Global tasks rendering placeholder');
+}
+
+function switchProject() {
+    const select = document.getElementById('projectSelect');
+    const projectId = select.value;
+    
+    if (projectId) {
+        switchToProject(projectId);
+    } else {
+        showProjectOverview();
+    }
+}
+
+function switchToProject(projectId) {
+    const project = StorageManager.getProject(projectId);
+    if (!project) {
+        console.error('Project not found:', projectId);
+        return;
+    }
+    
+    currentProjectId = projectId;
+    StorageManager.setCurrentProject(projectId);
+    
+    // Update dropdown selection
+    document.getElementById('projectSelect').value = projectId;
+    
+    // Show/hide views
+    document.getElementById('projectOverview').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'grid';
+    document.getElementById('dashboard').classList.remove('hidden');
+    
+    // Show project-specific buttons
+    document.getElementById('projectSettingsBtn').style.display = 'block';
+    
+    // Apply project theme
+    applyProjectTheme(project.theme);
+    
+    // Render all content panels
+    renderAllContent();
+    
+    console.log(`Switched to project: ${project.name} (${projectId})`);
+}
+
+function applyProjectTheme(theme) {
+    // Apply CSS theme classes
+    const dashboard = document.getElementById('dashboard');
+    dashboard.className = `dashboard project-theme-${theme}`;
+    
+    // Set CSS custom properties for dynamic theming
+    document.documentElement.style.setProperty('--current-theme', `var(--theme-${theme})`);
+}
+
+function openProjectModal() {
+    showModal('projectModal');
+}
+
+function createProject() {
+    const nameInput = document.getElementById('newProjectName');
+    const descInput = document.getElementById('newProjectDescription');
+    
+    const name = nameInput.value.trim();
+    const description = descInput.value.trim();
+    
+    if (!name) {
+        alert('Please enter a project name');
+        return;
+    }
+    
+    try {
+        const project = StorageManager.createProject(name, description);
+        
+        // Clear form
+        nameInput.value = '';
+        descInput.value = '';
+        
+        // Close modal
+        closeModal('projectModal');
+        
+        // Reload dropdown and switch to new project
+        loadProjectsDropdown();
+        switchToProject(project.id);
+        
+        console.log('Created and switched to new project:', project.name);
+        
+    } catch (error) {
+        console.error('Failed to create project:', error);
+        alert('Failed to create project: ' + error.message);
+    }
+}
+
+function openProjectSettings() {
+    if (!currentProjectId) return;
+    
+    const project = StorageManager.getCurrentProject();
+    if (!project) return;
+    
+    // Populate form with current values
+    document.getElementById('settingsProjectName').value = project.name;
+    document.getElementById('settingsColorTheme').value = project.theme;
+    
+    showModal('projectSettingsModal');
+}
+
+function saveProjectSettings() {
+    if (!currentProjectId) return;
+    
+    const name = document.getElementById('settingsProjectName').value.trim();
+    const theme = document.getElementById('settingsColorTheme').value;
+    
+    if (!name) {
+        alert('Please enter a project name');
+        return;
+    }
+    
+    try {
+        StorageManager.updateProject(currentProjectId, { name, theme });
+        
+        // Apply new theme immediately
+        applyProjectTheme(theme);
+        
+        // Update dropdown
+        loadProjectsDropdown();
+        document.getElementById('projectSelect').value = currentProjectId;
+        
+        closeModal('projectSettingsModal');
+        
+        console.log('Updated project settings');
+        
+    } catch (error) {
+        console.error('Failed to update project:', error);
+        alert('Failed to update project: ' + error.message);
+    }
+}
+
+// CONTENT MANAGEMENT
+
+function renderAllContent() {
+    if (!currentProjectId) return;
+    
+    renderBriefs();
+    renderNotes();
+    renderCopy();
+    renderTasks();
+}
+
+function renderBriefs() {
+    const container = document.getElementById('briefsList');
+    const briefs = StorageManager.getItems(currentProjectId, 'briefs');
+    
+    container.innerHTML = '';
+    
+    Object.values(briefs)
+        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+        .forEach(brief => {
+            const element = createItemElement(brief, 'brief');
+            container.appendChild(element);
+        });
+}
+
+function renderNotes() {
+    const container = document.getElementById('notesList');
+    const notes = StorageManager.getItems(currentProjectId, 'notes');
+    
+    container.innerHTML = '';
+    
+    Object.values(notes)
+        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+        .forEach(note => {
+            const element = createItemElement(note, 'note');
+            container.appendChild(element);
+        });
+}
+
+function renderCopy() {
+    const container = document.getElementById('copyList');
+    const copy = StorageManager.getItems(currentProjectId, 'copy');
+    
+    container.innerHTML = '';
+    
+    Object.values(copy)
+        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+        .forEach(copyItem => {
+            const element = createItemElement(copyItem, 'copy');
+            container.appendChild(element);
+        });
+}
+
+function renderTasks() {
+    const container = document.getElementById('projectTaskContainer');
+    const tasks = StorageManager.getItems(currentProjectId, 'tasks');
+    
+    container.innerHTML = '';
+    
+    Object.values(tasks)
+        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+        .forEach(task => {
+            const element = createTaskElement(task);
+            container.appendChild(element);
+        });
+}
+
+function createItemElement(item, type) {
+    const div = document.createElement('div');
+    div.className = `item ${type}-item`;
+    div.setAttribute('data-id', item.id);
+    div.setAttribute('data-type', type);
+    
+    const preview = getContentPreview(item.content || item.proposition || '', 60);
+    
+    div.innerHTML = `
+        <div class="grab-handle"></div>
+        <div class="item-header">
+            <div class="item-title">${item.title}</div>
+            <button class="btn btn-danger btn-small" onclick="deleteItem('${item.id}', '${type}')">Delete</button>
+        </div>
+        <div class="item-meta">${formatDate(item.updatedAt)}</div>
+        ${preview ? `<div class="item-preview">${preview}</div>` : ''}
+    `;
+    
+    // Double-click to edit
+    div.addEventListener('dblclick', () => openItemEditor(item.id, type));
+    
+    return div;
+}
+
+function createTaskElement(task) {
+    const div = document.createElement('div');
+    div.className = 'item task-item';
+    div.setAttribute('data-id', task.id);
+    div.setAttribute('data-type', 'task');
+    
+    div.innerHTML = `
+        <div class="grab-handle"></div>
+        <div class="item-header">
+            <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''} 
+                   onchange="toggleTaskComplete('${task.id}')">
+            <div class="item-title ${task.completed ? 'task-completed' : ''}">${task.title}</div>
+            ${task.sourceId ? `<div class="task-source-link" onclick="openSourceItem('${task.sourceId}', '${task.sourceType}')">Source</div>` : ''}
+            <button class="btn btn-danger btn-small" onclick="deleteItem('${task.id}', 'tasks')">Delete</button>
+        </div>
+        <div class="item-meta">${formatDate(task.updatedAt)}</div>
+    `;
+    
+    return div;
+}
+
+// CONTENT CREATION
+
+function addQuickBrief() {
+    const input = document.getElementById('briefTitle');
+    const title = input.value.trim();
+    
+    if (!title || !currentProjectId) return;
+    
+    try {
+        StorageManager.createItem(currentProjectId, 'briefs', { title });
+        input.value = '';
+        renderBriefs();
+        console.log('Created brief:', title);
+    } catch (error) {
+        console.error('Failed to create brief:', error);
+    }
+}
+
+function addQuickNote() {
+    const input = document.getElementById('noteTitle');
+    const title = input.value.trim();
+    
+    if (!title || !currentProjectId) return;
+    
+    try {
+        StorageManager.createItem(currentProjectId, 'notes', { title });
+        input.value = '';
+        renderNotes();
+        console.log('Created note:', title);
+    } catch (error) {
+        console.error('Failed to create note:', error);
+    }
+}
+
+function addQuickCopy() {
+    const input = document.getElementById('copyTitle');
+    const title = input.value.trim();
+    
+    if (!title || !currentProjectId) return;
+    
+    try {
+        StorageManager.createItem(currentProjectId, 'copy', { title });
+        input.value = '';
+        renderCopy();
+        console.log('Created copy:', title);
+    } catch (error) {
+        console.error('Failed to create copy:', error);
+    }
+}
+
+function addQuickTask() {
+    const input = document.getElementById('taskTitle');
+    const title = input.value.trim();
+    
+    if (!title || !currentProjectId) return;
+    
+    try {
+        StorageManager.createItem(currentProjectId, 'tasks', { title });
+        input.value = '';
+        renderTasks();
+        console.log('Created task:', title);
+    } catch (error) {
+        console.error('Failed to create task:', error);
+    }
+}
+
+function deleteItem(itemId, type) {
+    if (!currentProjectId || !confirm('Are you sure you want to delete this item?')) return;
+    
+    try {
+        const typeMap = {
+            'brief': 'briefs',
+            'note': 'notes',
+            'copy': 'copy',
+            'task': 'tasks'
+        };
+        
+        const storageType = typeMap[type] || type;
+        StorageManager.deleteItem(currentProjectId, storageType, itemId);
+        
+        // Re-render the appropriate panel
+        switch(type) {
+            case 'brief': renderBriefs(); break;
+            case 'note': renderNotes(); break;
+            case 'copy': renderCopy(); break;
+            case 'task': renderTasks(); break;
+        }
+        
+        console.log('Deleted item:', itemId, type);
+        
+    } catch (error) {
+        console.error('Failed to delete item:', error);
+    }
+}
+
+function toggleTaskComplete(taskId) {
+    if (!currentProjectId) return;
+    
+    try {
+        const task = StorageManager.getContentItem(currentProjectId, 'tasks', taskId);
+        if (task) {
+            StorageManager.updateItem(currentProjectId, 'tasks', taskId, { 
+                completed: !task.completed 
+            });
+            renderTasks();
+        }
+    } catch (error) {
+        console.error('Failed to toggle task:', error);
+    }
+}
+
+// EDITOR STUBS (will be implemented with RichTextEditor module)
+function openItemEditor(itemId, type) {
+    console.log('Would open editor for:', itemId, type);
+    // TODO: Implement with RichTextEditor module
+}
+
+function openSourceItem(sourceId, sourceType) {
+    console.log('Would open source item:', sourceId, sourceType);
+    // TODO: Navigate to source item
+}
+
+function closeEditor() {
+    document.getElementById('itemEditor').style.display = 'none';
+}
+
+// UTILITY FUNCTIONS
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    
+    return date.toLocaleDateString();
+}
+
+function getContentPreview(content, maxLength) {
+    if (!content) return '';
+    const stripped = content.replace(/<[^>]*>/g, '').trim();
+    return stripped.length > maxLength ? stripped.substring(0, maxLength) + '...' : stripped;
+}
+
+function updateUIState() {
+    const projects = StorageManager.getAllProjects();
+    const hasProjects = Object.keys(projects).length > 0;
+    
+    // Show/hide elements based on whether projects exist
+    if (hasProjects) {
+        loadProjectsDropdown();
+    }
+}
+
+// MODAL MANAGEMENT
+
 function showModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.style.display = 'block';
-        console.log(`Opened modal: ${modalId}`);
     }
 }
 
@@ -16,160 +541,11 @@ function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.style.display = 'none';
-        console.log(`Closed modal: ${modalId}`);
     }
 }
 
-// Project Management Stubs
-function showProjectOverview() {
-    const overview = document.getElementById('projectOverview');
-    const dashboard = document.getElementById('dashboard');
-    const projectSelect = document.getElementById('projectSelect');
-    
-    // Clear project selection
-    projectSelect.value = '';
-    
-    // Show overview, hide dashboard
-    overview.style.display = 'block';
-    dashboard.style.display = 'none';
-    dashboard.classList.add('hidden');
-    
-    console.log('Showing project overview');
-}
+// KEYBOARD SHORTCUTS
 
-function openProjectModal() {
-    showModal('projectModal');
-}
-
-function openProjectSettings() {
-    showModal('projectSettingsModal');
-}
-
-function createProject() {
-    const name = document.getElementById('newProjectName').value;
-    if (name.trim()) {
-        console.log(`Would create project: ${name}`);
-        closeModal('projectModal');
-        // Clear form
-        document.getElementById('newProjectName').value = '';
-        document.getElementById('newProjectDescription').value = '';
-    } else {
-        alert('Please enter a project name');
-    }
-}
-
-function switchProject() {
-    const select = document.getElementById('projectSelect');
-    const projectId = select.value;
-    if (projectId) {
-        console.log(`Would switch to project: ${projectId}`);
-        
-        // Hide overview and show dashboard
-        const overview = document.getElementById('projectOverview');
-        const dashboard = document.getElementById('dashboard');
-        
-        overview.style.display = 'none';
-        dashboard.style.display = 'grid';
-        dashboard.classList.remove('hidden');
-        
-        console.log(`Switched to project: ${projectId}`);
-    } else {
-        // If no project selected, show overview
-        document.getElementById('projectOverview').style.display = 'block';
-        document.getElementById('dashboard').style.display = 'none';
-    }
-}
-
-// Content Creation Stubs
-function addQuickBrief() {
-    const input = document.getElementById('briefTitle');
-    const title = input.value.trim();
-    if (title) {
-        console.log(`Would create brief: ${title}`);
-        addTestItem('briefsList', title, 'brief');
-        input.value = '';
-    }
-}
-
-function addQuickTask() {
-    const input = document.getElementById('taskTitle');
-    const title = input.value.trim();
-    if (title) {
-        console.log(`Would create task: ${title}`);
-        addTestItem('projectTaskContainer', title, 'task');
-        input.value = '';
-    }
-}
-
-function addQuickNote() {
-    const input = document.getElementById('noteTitle');
-    const title = input.value.trim();
-    if (title) {
-        console.log(`Would create note: ${title}`);
-        addTestItem('notesList', title, 'note');
-        input.value = '';
-    }
-}
-
-function addQuickCopy() {
-    const input = document.getElementById('copyTitle');
-    const title = input.value.trim();
-    if (title) {
-        console.log(`Would create copy: ${title}`);
-        addTestItem('copyList', title, 'copy');
-        input.value = '';
-    }
-}
-
-// Helper to add test items to panels
-function addTestItem(containerId, title, type) {
-    const container = document.getElementById(containerId);
-    const item = document.createElement('div');
-    item.className = `item ${type}-item`;
-    item.innerHTML = `
-        <div class="grab-handle"></div>
-        <div class="item-header">
-            <div class="item-title">${title}</div>
-            <button class="btn btn-danger btn-small" onclick="removeTestItem(this)">Delete</button>
-        </div>
-        <div class="item-meta">Created just now • Test item</div>
-    `;
-    container.appendChild(item);
-}
-
-function removeTestItem(button) {
-    const item = button.closest('.item');
-    if (item) {
-        item.remove();
-        console.log('Removed test item');
-    }
-}
-
-// Editor Stubs
-function closeEditor() {
-    document.getElementById('itemEditor').style.display = 'none';
-    console.log('Closed editor');
-}
-
-// Help System
-function showHelp() {
-    showModal('helpModal');
-}
-
-function toggleArchivedProjects() {
-    console.log('Would toggle archived projects visibility');
-}
-
-function saveProjectSettings() {
-    console.log('Would save project settings');
-    closeModal('projectSettingsModal');
-}
-
-function exportProjectAsWord() {
-    console.log('Would export project as Word document');
-}
-
-// Keyboard Support
 function handleEnterKey(event, type) {
     if (event.key === 'Enter') {
         switch(type) {
@@ -181,32 +557,23 @@ function handleEnterKey(event, type) {
     }
 }
 
-// Initialize test data
-function initializeTestData() {
-    // Add some test projects to the dropdown
-    const projectSelect = document.getElementById('projectSelect');
-    const testProjects = [
-        { id: 'test-1', name: 'Test Project 1' },
-        { id: 'test-2', name: 'Test Project 2' },
-        { id: 'test-3', name: 'Test Project 3' }
-    ];
-    
-    testProjects.forEach(project => {
-        const option = document.createElement('option');
-        option.value = project.id;
-        option.textContent = project.name;
-        projectSelect.appendChild(option);
-    });
+// PLACEHOLDER FUNCTIONS (to be implemented with other modules)
 
-    // Show some UI elements that are normally hidden
-    document.getElementById('archiveToggle').classList.remove('hidden');
-    document.getElementById('projectSettingsBtn').classList.remove('hidden');
-    
-    // Start in overview mode
-    document.getElementById('projectOverview').style.display = 'block';
-    
-    console.log('Test data initialized');
+function toggleArchivedProjects() {
+    console.log('Would toggle archived projects visibility');
+    // TODO: Implement archived project toggling
 }
+
+function exportProjectAsWord() {
+    console.log('Would export project as Word document');
+    // TODO: Implement Word export
+}
+
+function showHelp() {
+    showModal('helpModal');
+}
+
+// EVENT LISTENERS
 
 // Click outside modal to close
 document.addEventListener('click', function(event) {
@@ -229,6 +596,6 @@ document.addEventListener('keydown', function(event) {
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, initializing test environment...');
-    initializeTestData();
+    console.log('DOM loaded, initializing CopyFlow...');
+    initializeApp();
 });
