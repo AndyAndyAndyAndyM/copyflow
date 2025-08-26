@@ -28,6 +28,11 @@ class RichTextEditor {
         this.copyButton = document.getElementById('copyToClipboardBtn');
         this.insertHeadingsButton = document.getElementById('insertHeadingsBtn');
         
+        // Make client brief field contenteditable if it exists
+        if (this.clientBriefField) {
+            this.clientBriefField.contentEditable = true;
+        }
+        
         this.setupEventListeners();
         console.log('RichTextEditor initialized');
     }
@@ -42,8 +47,36 @@ class RichTextEditor {
             this.propositionField.addEventListener('input', () => this.scheduleAutoSave());
         }
         
+        // Client brief field is contenteditable like richEditor
         if (this.clientBriefField) {
             this.clientBriefField.addEventListener('input', () => this.scheduleAutoSave());
+            
+            // Handle paste for client brief field
+            this.clientBriefField.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const text = (e.clipboardData || window.clipboardData).getData('text');
+                const lines = text.split('\n');
+                const fragment = document.createDocumentFragment();
+                
+                lines.forEach((line, index) => {
+                    if (index > 0) {
+                        fragment.appendChild(document.createElement('br'));
+                    }
+                    fragment.appendChild(document.createTextNode(line));
+                });
+                
+                const selection = window.getSelection();
+                if (selection.rangeCount) {
+                    const range = selection.getRangeAt(0);
+                    range.deleteContents();
+                    range.insertNode(fragment);
+                    range.collapse(false);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                }
+                
+                this.scheduleAutoSave();
+            });
         }
 
         // Rich text editor focus management
