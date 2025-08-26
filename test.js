@@ -22,8 +22,18 @@ function closeModal(modalId) {
 
 // Project Management Stubs
 function showProjectOverview() {
-    document.getElementById('projectOverview').style.display = 'block';
-    document.getElementById('dashboard').style.display = 'none';
+    const overview = document.getElementById('projectOverview');
+    const dashboard = document.getElementById('dashboard');
+    const projectSelect = document.getElementById('projectSelect');
+    
+    // Clear project selection
+    projectSelect.value = '';
+    
+    // Show overview, hide dashboard
+    overview.style.display = 'block';
+    dashboard.style.display = 'none';
+    dashboard.classList.add('hidden');
+    
     console.log('Showing project overview');
 }
 
@@ -53,8 +63,20 @@ function switchProject() {
     const projectId = select.value;
     if (projectId) {
         console.log(`Would switch to project: ${projectId}`);
-        document.getElementById('dashboard').style.display = 'grid';
-        document.getElementById('projectOverview').style.display = 'none';
+        
+        // Hide overview and show dashboard
+        const overview = document.getElementById('projectOverview');
+        const dashboard = document.getElementById('dashboard');
+        
+        overview.style.display = 'none';
+        dashboard.style.display = 'grid';
+        dashboard.classList.remove('hidden');
+        
+        console.log(`Switched to project: ${projectId}`);
+    } else {
+        // If no project selected, show overview
+        document.getElementById('projectOverview').style.display = 'block';
+        document.getElementById('dashboard').style.display = 'none';
     }
 }
 
