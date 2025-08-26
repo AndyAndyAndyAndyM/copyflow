@@ -74,9 +74,13 @@ function showProjectOverview() {
     renderProjectGrid();
     renderGlobalTasks();
     
+    // Refresh drag and drop after rendering global tasks
+    if (window.dragDropHandler) {
+        window.dragDropHandler.refreshDraggableItems();
+    }
+    
     console.log('Showing project overview');
 }
-
 function renderProjectGrid() {
     const grid = document.getElementById('projectGrid');
     const projects = StorageManager.getAllProjects();
