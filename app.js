@@ -483,10 +483,6 @@ function toggleTaskComplete(taskId) {
 }
 
 // EDITOR STUBS (will be implemented with RichTextEditor module)
-function openItemEditor(itemId, type) {
-    console.log('Would open editor for:', itemId, type);
-    // TODO: Implement with RichTextEditor module
-}
 
 function openSourceItem(sourceId, sourceType) {
     console.log('Would open source item:', sourceId, sourceType);
