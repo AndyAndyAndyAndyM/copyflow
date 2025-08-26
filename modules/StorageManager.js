@@ -339,8 +339,8 @@ class StorageManager {
         return project[type] || {};
     }
 
-    // Get single item
-    static getItem(projectId, type, itemId) {
+    // Get single content item
+    static getContentItem(projectId, type, itemId) {
         const items = this.getItems(projectId, type);
         return items[itemId] || null;
     }
@@ -349,12 +349,12 @@ class StorageManager {
     
     // Add link between items
     static addItemLink(projectId, sourceType, sourceId, targetType, targetId) {
-        const sourceItem = this.getItem(projectId, sourceType, sourceId);
+        const sourceItem = this.getContentItem(projectId, sourceType, sourceId);
         if (!sourceItem) {
             throw new Error('Source item not found');
         }
 
-        const targetItem = this.getItem(projectId, targetType, targetId);
+        const targetItem = this.getContentItem(projectId, targetType, targetId);
         if (!targetItem) {
             throw new Error('Target item not found');
         }
@@ -372,7 +372,7 @@ class StorageManager {
 
     // Remove link between items
     static removeItemLink(projectId, sourceType, sourceId, targetType, targetId) {
-        const sourceItem = this.getItem(projectId, sourceType, sourceId);
+        const sourceItem = this.getContentItem(projectId, sourceType, sourceId);
         if (!sourceItem) {
             return false;
         }
@@ -388,14 +388,14 @@ class StorageManager {
 
     // Get linked items
     static getLinkedItems(projectId, sourceType, sourceId) {
-        const sourceItem = this.getItem(projectId, sourceType, sourceId);
+        const sourceItem = this.getContentItem(projectId, sourceType, sourceId);
         if (!sourceItem) {
             return [];
         }
 
         return sourceItem.linkedItems.map(link => ({
             ...link,
-            item: this.getItem(projectId, link.type, link.id)
+            item: this.getContentItem(projectId, link.type, link.id)
         })).filter(link => link.item); // Filter out broken links
     }
 
