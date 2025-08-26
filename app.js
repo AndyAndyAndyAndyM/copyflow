@@ -74,10 +74,7 @@ function showProjectOverview() {
     renderProjectGrid();
     renderGlobalTasks();
     
-    // Refresh drag and drop after rendering global tasks
-    if (window.dragDropHandler) {
-        window.dragDropHandler.refreshDraggableItems();
-    }
+    // Don't call refreshDraggableItems here - renderGlobalTasks handles its own drop setup
     
     console.log('Showing project overview');
 }
