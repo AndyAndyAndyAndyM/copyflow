@@ -660,25 +660,25 @@ class PomodoroTimer {
 
     // STATIC METHODS FOR GLOBAL ACCESS
 
-    static startTimer() {
+    static start() {
         if (window.pomodoroTimer) {
             window.pomodoroTimer.startTimer();
         }
     }
 
-    static pauseTimer() {
+    static pause() {
         if (window.pomodoroTimer) {
             window.pomodoroTimer.pauseTimer();
         }
     }
 
-    static resetTimer() {
+    static reset() {
         if (window.pomodoroTimer) {
             window.pomodoroTimer.resetTimer();
         }
     }
 
-    static skipSession() {
+    static skip() {
         if (window.pomodoroTimer) {
             window.pomodoroTimer.skipSession();
         }
@@ -703,19 +703,19 @@ class PomodoroTimer {
 
 // Global functions for HTML onclick handlers
 function startPomodoro() {
-    PomodoroTimer.startTimer();
+    PomodoroTimer.start();
 }
 
 function pausePomodoro() {
-    PomodoroTimer.pauseTimer();
+    PomodoroTimer.pause();
 }
 
 function resetPomodoro() {
-    PomodoroTimer.resetTimer();
+    PomodoroTimer.reset();
 }
 
 function skipPomodoro() {
-    PomodoroTimer.skipSession();
+    PomodoroTimer.skip();
 }
 
 // Initialize timer when DOM is ready
