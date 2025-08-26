@@ -123,8 +123,72 @@ function createProjectCard(project) {
 }
 
 function renderGlobalTasks() {
-    // This will be implemented when we build the task priority system
-    console.log('Global tasks rendering placeholder');
+    // Get top three tasks
+    const topThreeTasks = DragDropHandler.getTopThreeTasks();
+    const topThreeContainer = document.getElementById('topThreeTasks');
+    const otherTasksContainer = document.getElementById('otherTasks');
+    
+    // Render top three tasks
+    topThreeContainer.innerHTML = '';
+    topThreeTasks.forEach(taskRef => {
+        const task = StorageManager.getContentItem(taskRef.projectId, 'tasks', taskRef.taskId);
+        if (task) {
+            const taskElement = createGlobalTaskElement(task, taskRef.projectId);
+            topThreeContainer.appendChild(taskElement);
+        }
+    });
+    
+    if (topThreeTasks.length === 0) {
+        topThreeContainer.innerHTML = '<div class="task-drop-zone">Drop your most important tasks here</div>';
+    }
+    
+    // Get all other tasks from all projects
+    const allProjects = StorageManager.getAllProjects();
+    otherTasksContainer.innerHTML = '';
+    
+    Object.values(allProjects).forEach(project => {
+        const tasks = Object.values(project.tasks || {});
+        tasks.forEach(task => {
+            // Skip if already in top three
+            const isInTopThree = topThreeTasks.some(t => t.taskId === task.id && t.projectId === project.id);
+            if (!isInTopThree) {
+                const taskElement = createGlobalTaskElement(task, project.id);
+                otherTasksContainer.appendChild(taskElement);
+            }
+        });
+    });
+    
+    if (otherTasksContainer.children.length === 0) {
+        otherTasksContainer.innerHTML = '<div class="task-drop-zone">All other tasks appear here</div>';
+    }
+    
+    console.log('Rendered global tasks');
+}
+
+function createGlobalTaskElement(task, projectId) {
+    const div = document.createElement('div');
+    div.className = 'item task-item global-task-item';
+    div.setAttribute('data-id', task.id);
+    div.setAttribute('data-type', 'task');
+    div.draggable = true;
+    
+    div.innerHTML = `
+        <div class="grab-handle"></div>
+        <div class="item-header">
+            <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''} 
+                   onchange="toggleTaskComplete('${task.id}')">
+            <div class="item-title ${task.completed ? 'task-completed' : ''}">${task.title}</div>
+            <div class="global-task-project project-theme-blue">${getProjectName(projectId)}</div>
+        </div>
+        <div class="item-meta">${formatDate(task.updatedAt)}</div>
+    `;
+    
+    return div;
+}
+
+function getProjectName(projectId) {
+    const project = StorageManager.getProject(projectId);
+    return project ? project.name : 'Unknown';
 }
 
 function switchProject() {
@@ -282,6 +346,11 @@ function renderBriefs() {
             const element = createItemElement(brief, 'brief');
             container.appendChild(element);
         });
+    
+    // Refresh drag and drop after rendering
+    if (window.dragDropHandler) {
+        window.dragDropHandler.refreshDraggableItems();
+    }
 }
 
 function renderNotes() {
@@ -296,6 +365,11 @@ function renderNotes() {
             const element = createItemElement(note, 'note');
             container.appendChild(element);
         });
+    
+    // Refresh drag and drop after rendering
+    if (window.dragDropHandler) {
+        window.dragDropHandler.refreshDraggableItems();
+    }
 }
 
 function renderCopy() {
@@ -310,6 +384,11 @@ function renderCopy() {
             const element = createItemElement(copyItem, 'copy');
             container.appendChild(element);
         });
+    
+    // Refresh drag and drop after rendering
+    if (window.dragDropHandler) {
+        window.dragDropHandler.refreshDraggableItems();
+    }
 }
 
 function renderTasks() {
@@ -324,6 +403,11 @@ function renderTasks() {
             const element = createTaskElement(task);
             container.appendChild(element);
         });
+    
+    // Refresh drag and drop after rendering
+    if (window.dragDropHandler) {
+        window.dragDropHandler.refreshDraggableItems();
+    }
 }
 
 function createItemElement(item, type) {
