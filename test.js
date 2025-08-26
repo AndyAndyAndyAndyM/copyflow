@@ -156,6 +156,19 @@ function showHelp() {
     showModal('helpModal');
 }
 
+function toggleArchivedProjects() {
+    console.log('Would toggle archived projects visibility');
+}
+
+function saveProjectSettings() {
+    console.log('Would save project settings');
+    closeModal('projectSettingsModal');
+}
+
+function exportProjectAsWord() {
+    console.log('Would export project as Word document');
+}
+
 // Keyboard Support
 function handleEnterKey(event, type) {
     if (event.key === 'Enter') {
