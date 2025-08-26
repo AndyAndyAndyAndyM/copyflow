@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>copyflow</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
+    
+    <!-- Header -->
+    <div class="header">
+        <div class="project-selector">
+            <h1>copyflow</h1>
+            <select id="projectSelect" onchange="switchProject()">
+                <option value="">Select a project...</option>
+            </select>
+            <button class="btn" onclick="showProjectOverview()">All Projects</button>
+            <button class="btn" onclick="openProjectModal()">New Project</button>
+            <button class="btn btn-secondary hidden" id="archiveToggle" onclick="toggleArchivedProjects()">Show Archived</button>
+            <button class="btn btn-secondary hidden" id="projectSettingsBtn" onclick="openProjectSettings()">Settings</button>
+            <button class="btn btn-small" onclick="showHelp()" title="Help (F1)">?</button>
+        </div>
+    </div>
+
+    <!-- Breadcrumb Trail -->
+    <div class="breadcrumb-container hidden" id="breadcrumbContainer">
+        <div class="breadcrumb-trail" id="breadcrumbTrail"></div>
+    </div>
+
+    <!-- Project Overview -->
+    <div class="project-overview" id="projectOverview">
+        <div class="overview-layout">
+            <div>
+                <div class="project-grid" id="projectGrid"></div>
+            </div>
+            <div class="global-tasks-panel">
+                <div class="global-tasks-header">
+                    <h3>Global Tasks</h3>
+                </div>
+                
+                <div class="top-three-section">
+                    <div class="top-three-header">Top 3 Priority Tasks</div>
+                    <div id="topThreeTasks" class="task-drop-zone" 
+                         ondrop="handleTaskDrop(event, 'top-three')" 
+                         ondragover="handleTaskDragOver(event)"
+                         ondragleave="handleTaskDragLeave(event)">
+                        Drop your most important tasks here
+                    </div>
+                </div>
+                
+                <div class="other-tasks-section">
+                    <div class="other-tasks-header">All Other Tasks</div>
+                    <div id="otherTasks" class="task-drop-zone"
+                         ondrop="handleTaskDrop(event, 'other')" 
+                         ondragover="handleTaskDragOver(event)"
+                         ondragleave="handleTaskDragLeave(event)">
+                        All other tasks appear here
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="dashboard hidden" id="dashboard">
+        <!-- Briefs Panel -->
+        <div class="panel panel-briefs">
+            <div class="panel-header">
+                <span class="icon">B</span>
+                <h2>Briefs</h2>
+            </div>
+            
+            <div class="input-group">
+                <input type="text" id="briefTitle" placeholder="Brief title..." onkeypress="handleEnterKey(event, 'brief')">
+                <button class="btn" onclick="addQuickBrief()">Add</button>
+            </div>
+
+            <div class="scrollable drop-zone" id="briefsList" 
+                 ondrop="handleDrop(event, 'brief')" 
+                 ondragover="handleDragOver(event)"
+                 ondragleave="handleDragLeave(event)"
+                 data-drop-message="Drop here to create brief">
+            </div>
+        </div>
+
+        <!-- Tasks Panel -->
+        <div class="panel panel-tasks">
+            <div class="panel-header">
+                <span class="icon">T</span>
+                <h2>Tasks</h2>
+            </div>
+
+            <div class="input-group">
+                <input type="text" id="taskTitle" placeholder="Task title..." onkeypress="handleEnterKey(event, 'task')">
+                <button class="btn" onclick="addQuickTask()">Add</button>
+            </div>
+
+            <div id="projectTaskContainer" class="scrollable drop-zone" 
+                 ondrop="handleDrop(event, 'task')" 
+                 ondragover="handleDragOver(event)"
+                 ondragleave="handleDragLeave(event)"
+                 data-drop-message="Drop any item here to create task">
+            </div>
+        </div>
+
+        <!-- Notes Panel -->
+        <div class="panel panel-notes">
+            <div class="panel-header">
+                <span class="icon">N</span>
+                <h2>Notes</h2>
+            </div>
+            
+            <div class="input-group">
+                <input type="text" id="noteTitle" placeholder="Note title..." onkeypress="handleEnterKey(event, 'note')">
+                <button class="btn" onclick="addQuickNote()">Add</button>
+            </div>
+
+            <div class="scrollable drop-zone" id="notesList" 
+                 ondrop="handleDrop(event, 'note')" 
+                 ondragover="handleDragOver(event)"
+                 ondragleave="handleDragLeave(event)"
+                 data-drop-message="Drop brief here to create linked note">
+            </div>
+        </div>
+
+        <!-- Copy Panel -->
+        <div class="panel panel-copy">
+            <div class="panel-header">
+                <span class="icon">C</span>
+                <h2>Copy</h2>
+            </div>
+            
+            <div class="input-group">
+                <input type="text" id="copyTitle" placeholder="Copy title..." onkeypress="handleEnterKey(event, 'copy')">
+                <button class="btn" onclick="addQuickCopy()">Add</button>
+            </div>
+
+            <div class="scrollable drop-zone" id="copyList" 
+                 ondrop="handleDrop(event, 'copy')" 
+                 ondragover="handleDragOver(event)"
+                 ondragleave="handleDragLeave(event)"
+                 data-drop-message="Drop brief here to create linked copy">
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Project Modal -->
+    <div id="projectModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New Project</h3>
+                <button class="close-btn" onclick="closeModal('projectModal')">&times;</button>
+            </div>
+            <div class="input-group">
+                <input type="text" id="newProjectName" placeholder="Project name...">
+            </div>
+            <textarea id="newProjectDescription" placeholder="Project description..."></textarea>
+            <!-- Import zone will be added here dynamically by JavaScript -->
+            <button class="btn" onclick="createProject()">Create Project</button>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content help-modal-content">
+            <div class="modal-header">
+                <h2>Help & User Guide</h2>
+                <span class="close-btn" onclick="closeModal('helpModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <!-- Quick Start -->
+                <section class="help-section">
+                    <h3>Quick Start</h3>
+                    <ol>
+                        <li><strong>Create a Project:</strong> Click "New Project" to start organizing your work</li>
+                        <li><strong>Add Briefs:</strong> Create project briefs with propositions and client requirements</li>
+                        <li><strong>Develop Ideas:</strong> Drag briefs to create linked notes and copy</li>
+                        <li><strong>Create Tasks:</strong> Drag any item to tasks to create actionable items</li>
+                        <li><strong>Prioritize:</strong> Use drag & drop to manage your top 3 priority tasks</li>
+                    </ol>
+                </section>
+
+                <!-- Workflow -->
+                <section class="help-section">
+                    <h3>Workflow</h3>
+                    <div class="workflow-grid">
+                        <div class="workflow-item">
+                            <div class="workflow-icon">B</div>
+                            <strong>Briefs</strong><br>
+                            <small>Project requirements & propositions</small>
+                        </div>
+                        <div class="workflow-item">
+                            <div class="workflow-icon">N</div>
+                            <strong>Notes</strong><br>
+                            <small>Ideas & research</small>
+                        </div>
+                        <div class="workflow-item">
+                            <div class="workflow-icon">C</div>
+                            <strong>Copy</strong><br>
+                            <small>Written content</small>
+                        </div>
+                        <div class="workflow-item">
+                            <div class="workflow-icon">T</div>
+                            <strong>Tasks</strong><br>
+                            <small>Action items</small>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Additional help sections would go here -->
+                <!-- Truncated for brevity - you can expand this with the full help content -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Item Editor Modal -->
+    <div id="itemEditor" class="editor-modal">
+        <div class="editor-content">
+            <div class="editor-header">
+                <div class="editor-header-left">
+                    <h3 id="editorTitle">Edit Item</h3>
+                </div>
+                <div class="editor-header-right">
+                    <!-- Pomodoro Timer -->
+                    <div id="pomodoroTimer" class="pomodoro-timer hidden">
+                        <div class="pomodoro-display" id="pomodoroDisplay">25:00</div>
+                        <div class="pomodoro-status" id="pomodoroStatus">Ready to focus</div>
+                        <div class="pomodoro-controls">
+                            <button class="pomodoro-btn" id="pomodoroStart" onclick="startPomodoro()">Start</button>
+                            <button class="pomodoro-btn hidden" id="pomodoroPause" onclick="pausePomodoro()">Pause</button>
+                            <button class="pomodoro-btn" onclick="resetPomodoro()">Reset</button>
+                            <button class="pomodoro-btn" onclick="skipPomodoro()">Skip</button>
+                        </div>
+                        <div class="pomodoro-stats">
+                            <span>Session: <span id="sessionCount">0</span></span>
+                            <span>Today: <span id="dailyCount">0</span></span>
+                        </div>
+                    </div>
+                    <button class="close-btn" onclick="closeEditor()">&times;</button>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <input type="text" id="editorItemTitle" placeholder="Title...">
+            </div>
+            
+            <!-- Brief-specific fields -->
+            <div id="briefFields" class="hidden">
+                <div class="form-group">
+                    <label>Custom Proposition</label>
+                    <textarea id="editorProposition" class="editor-textarea brief-proposition" placeholder="Write your custom proposition here..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Full Client Brief</label>
+                    <div id="editorClientBrief" class="rich-text-editor" placeholder="Paste or write the full client brief here..."></div>
+                </div>
+            </div>
+            
+            <!-- Standard content field for other types -->
+            <div id="standardFields">
+                <div class="editor-toolbar">
+                    <button onclick="formatRichText('bold')" title="Bold">B</button>
+                    <button onclick="formatRichText('italic')" title="Italic">I</button>
+                    <button onclick="formatRichText('formatBlock', 'h1')" title="Heading">H1</button>
+                    <button onclick="formatRichText('formatBlock', 'h2')" title="Subheading">H2</button>
+                    <button onclick="formatRichText('insertUnorderedList')" title="Bullet List">List</button>
+                    <button onclick="formatRichText('insertOrderedList')" title="Numbered List">Numbers</button>
+                    <button onclick="createLink()" title="Link">Link</button>
+                    <button onclick="formatRichText('removeFormat')" title="Clear Formatting">Clear</button>
+                    <button id="copyToClipboardBtn" class="btn-copy hidden" onclick="copyContentToClipboard()" title="Copy to Clipboard">Copy</button>
+                    <button id="insertHeadingsBtn" class="btn-insert hidden" onclick="insertStandardHeadings()" title="Insert Standard Prompts">Prompts</button>
+                </div>
+                
+                <div id="richEditor" class="rich-editor font-serif" contenteditable="true" placeholder="Start writing... (Use the toolbar above for formatting)"></div>
+                <textarea id="editorContent" class="editor-textarea hidden font-serif" placeholder="Content..."></textarea>
+            </div>
+            
+            <div class="editor-footer">
+                <div id="autosaveStatus" class="autosave-status">
+                    <span id="autosaveText">Ready</span>
+                </div>
+                <button class="btn btn-secondary" onclick="closeEditor()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Settings Modal -->
+    <div id="projectSettingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Project Settings</h3>
+                <button class="close-btn" onclick="closeModal('projectSettingsModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Project Name</label>
+                <input type="text" id="settingsProjectName" placeholder="Project name...">
+            </div>
+            <div class="form-group">
+                <label>Color Theme</label>
+                <select id="settingsColorTheme">
+                    <option value="blue">Blue</option>
+                    <option value="green">Green</option>
+                    <option value="purple">Purple</option>
+                    <option value="pink">Pink</option>
+                    <option value="orange">Orange</option>
+                    <option value="teal">Teal</option>
+                    <option value="indigo">Indigo</option>
+                    <option value="red">Red</option>
+                </select>
+            </div>
+            <div class="project-settings-actions">
+                <button class="btn" onclick="saveProjectSettings()">Save Settings</button>
+                <button class="btn btn-export" onclick="exportProjectAsWord()">Export as Word</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="confirmTitle">Confirm Action</h3>
+            </div>
+            <div id="confirmMessage" class="confirm-message">
+                Are you sure you want to proceed?
+            </div>
+            <div class="confirm-actions">
+                <button class="btn btn-secondary" onclick="cancelConfirm()">Cancel</button>
+                <button class="btn btn-danger" onclick="proceedConfirm()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
