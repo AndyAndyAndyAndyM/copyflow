@@ -1,4 +1,4 @@
-// app.js - CopyFlow with StorageManager Integration
+// app.js - CopyFlow with StorageManager Integration (Fixed Task Issues)
 // This replaces test.js with real functionality
 
 console.log('CopyFlow with StorageManager loaded');
@@ -363,10 +363,13 @@ function createTaskElement(task) {
                    onchange="toggleTaskComplete('${task.id}')">
             <div class="item-title ${task.completed ? 'task-completed' : ''}">${task.title}</div>
             ${task.sourceId ? `<div class="task-source-link" onclick="openSourceItem('${task.sourceId}', '${task.sourceType}')">Source</div>` : ''}
-            <button class="btn btn-danger btn-small" onclick="deleteItem('${task.id}', 'tasks')">Delete</button>
+            <button class="btn btn-danger btn-small" onclick="deleteItem('${task.id}', 'task')">Delete</button>
         </div>
         <div class="item-meta">${formatDate(task.updatedAt)}</div>
     `;
+    
+    // FIXED: Double-click to edit with explicit 'task' type
+    div.addEventListener('dblclick', () => openItemEditor(task.id, 'task'));
     
     return div;
 }
@@ -441,6 +444,7 @@ function deleteItem(itemId, type) {
     if (!currentProjectId || !confirm('Are you sure you want to delete this item?')) return;
     
     try {
+        // FIXED: Consistent type mapping including tasks
         const typeMap = {
             'brief': 'briefs',
             'note': 'notes',
@@ -451,7 +455,7 @@ function deleteItem(itemId, type) {
         const storageType = typeMap[type] || type;
         StorageManager.deleteItem(currentProjectId, storageType, itemId);
         
-        // Re-render the appropriate panel
+        // FIXED: Re-render the appropriate panel including tasks
         switch(type) {
             case 'brief': renderBriefs(); break;
             case 'note': renderNotes(); break;
@@ -482,15 +486,9 @@ function toggleTaskComplete(taskId) {
     }
 }
 
-// EDITOR STUBS (will be implemented with RichTextEditor module)
-
 function openSourceItem(sourceId, sourceType) {
     console.log('Would open source item:', sourceId, sourceType);
     // TODO: Navigate to source item
-}
-
-function closeEditor() {
-    document.getElementById('itemEditor').style.display = 'none';
 }
 
 // UTILITY FUNCTIONS
