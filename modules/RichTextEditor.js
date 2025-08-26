@@ -128,6 +128,14 @@ class RichTextEditor {
 
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                // Only close editor if not in focus mode (let PomodoroTimer handle focus mode)
+                if (this.isEditorOpen && !(window.pomodoroState && window.pomodoroState.isFocusMode)) {
+                    e.preventDefault();
+                    this.closeEditor();
+                }
+            }
+            
             if (this.isEditorOpen) {
                 // Ctrl+S to save
                 if (e.ctrlKey && e.key === 's') {
@@ -238,12 +246,12 @@ class RichTextEditor {
             // Load brief-specific fields
             this.propositionField.value = item.proposition || '';
             
-            // Load client brief (rich text)
+            // Load client brief (rich text contenteditable div)
             if (this.clientBriefField) {
                 this.clientBriefField.innerHTML = item.clientBrief || '';
             }
         } else {
-            // Load standard content field
+            // Load standard content field (for notes, copy, tasks)
             this.richEditor.innerHTML = item.content || '';
             
             // Also sync to textarea (hidden fallback)
@@ -316,8 +324,9 @@ class RichTextEditor {
 
             if (this.currentItemType === 'brief') {
                 updates.proposition = this.propositionField.value;
-                updates.clientBrief = this.clientBriefField.innerHTML;
+                updates.clientBrief = this.clientBriefField ? this.clientBriefField.innerHTML : '';
             } else {
+                // For notes, copy, and tasks
                 updates.content = this.richEditor.innerHTML;
                 
                 // Also sync to textarea
@@ -473,6 +482,7 @@ class RichTextEditor {
     // UTILITY METHODS
 
     getStorageType(itemType) {
+        // Map UI item types to storage types
         const typeMap = {
             'brief': 'briefs',
             'note': 'notes', 
