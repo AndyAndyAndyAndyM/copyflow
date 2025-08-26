@@ -85,11 +85,15 @@ class DragDropHandler {
 
     // DRAG EVENT HANDLERS
 
-    handleDragStart(event, itemId, itemType) {
-        this.draggedItem = this.getItemFromDOM(event.target);
-        this.draggedItemId = itemId;
-        this.draggedItemType = itemType;
-        this.currentProjectId = window.currentProjectId || StorageManager.getCurrentProjectId();
+   handleDragStart(event, itemId, itemType) {
+    this.draggedItem = this.getItemFromDOM(event.target);
+    this.draggedItemId = itemId;
+    this.draggedItemType = itemType;
+    
+    // Try to get project ID from the element first, then fall back to current project
+    const elementProjectId = event.target.getAttribute('data-project-id');
+    this.currentProjectId = elementProjectId || window.currentProjectId || StorageManager.getCurrentProjectId();
+    
         
         // Add dragging visual state
         event.target.classList.add('dragging');
