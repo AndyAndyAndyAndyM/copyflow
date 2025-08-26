@@ -174,6 +174,7 @@ function createGlobalTaskElement(task, projectId) {
     div.className = 'item task-item global-task-item';
     div.setAttribute('data-id', task.id);
     div.setAttribute('data-type', 'task');
+    div.setAttribute('data-project-id', projectId); // Add this line
     div.draggable = true;
     
     div.innerHTML = `
