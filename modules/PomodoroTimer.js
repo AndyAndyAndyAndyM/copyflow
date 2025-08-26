@@ -200,7 +200,6 @@ function completePomodoroSession() {
         window.pomodoroState.currentSession = 'work';
         window.pomodoroState.timeRemaining = 25 * 60;
         
-        showPomodoroNotification('Break over! Ready for another focus session?');
     }
     
     // Exit focus mode
