@@ -148,76 +148,6 @@
         </div>
     </div>
 
-    <!-- Modals -->
-    <!-- Project Modal -->
-    <div id="projectModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Create New Project</h3>
-                <button class="close-btn" onclick="closeModal('projectModal')">&times;</button>
-            </div>
-            <div class="input-group">
-                <input type="text" id="newProjectName" placeholder="Project name...">
-            </div>
-            <textarea id="newProjectDescription" placeholder="Project description..."></textarea>
-            <!-- Import zone will be added here dynamically by JavaScript -->
-            <button class="btn" onclick="createProject()">Create Project</button>
-        </div>
-    </div>
-
-    <!-- Help Modal -->
-    <div id="helpModal" class="modal">
-        <div class="modal-content help-modal-content">
-            <div class="modal-header">
-                <h2>Help & User Guide</h2>
-                <span class="close-btn" onclick="closeModal('helpModal')">&times;</span>
-            </div>
-            <div class="modal-body">
-                <!-- Quick Start -->
-                <section class="help-section">
-                    <h3>Quick Start</h3>
-                    <ol>
-                        <li><strong>Create a Project:</strong> Click "New Project" to start organizing your work</li>
-                        <li><strong>Add Briefs:</strong> Create project briefs with propositions and client requirements</li>
-                        <li><strong>Develop Ideas:</strong> Drag briefs to create linked notes and copy</li>
-                        <li><strong>Create Tasks:</strong> Drag any item to tasks to create actionable items</li>
-                        <li><strong>Prioritize:</strong> Use drag & drop to manage your top 3 priority tasks</li>
-                    </ol>
-                </section>
-
-                <!-- Workflow -->
-                <section class="help-section">
-                    <h3>Workflow</h3>
-                    <div class="workflow-grid">
-                        <div class="workflow-item">
-                            <div class="workflow-icon">B</div>
-                            <strong>Briefs</strong><br>
-                            <small>Project requirements & propositions</small>
-                        </div>
-                        <div class="workflow-item">
-                            <div class="workflow-icon">N</div>
-                            <strong>Notes</strong><br>
-                            <small>Ideas & research</small>
-                        </div>
-                        <div class="workflow-item">
-                            <div class="workflow-icon">C</div>
-                            <strong>Copy</strong><br>
-                            <small>Written content</small>
-                        </div>
-                        <div class="workflow-item">
-                            <div class="workflow-icon">T</div>
-                            <strong>Tasks</strong><br>
-                            <small>Action items</small>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Additional help sections would go here -->
-                <!-- Truncated for brevity - you can expand this with the full help content -->
-            </div>
-        </div>
-    </div>
-
     <!-- Item Editor Modal -->
     <div id="itemEditor" class="editor-modal">
         <div class="editor-content">
@@ -282,15 +212,29 @@
             </div>
             
             <div class="editor-footer">
+                <button class="btn btn-secondary" onclick="closeEditor()">Close</button>
                 <div id="autosaveStatus" class="autosave-status">
                     <span id="autosaveText">Ready</span>
                 </div>
-                <button class="btn btn-secondary" onclick="closeEditor()">Close</button>
             </div>
         </div>
     </div>
 
-    <!-- Project Settings Modal -->
+    <!-- Other Modals (Project, Settings, etc.) -->
+    <div id="projectModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New Project</h3>
+                <button class="close-btn" onclick="closeModal('projectModal')">&times;</button>
+            </div>
+            <div class="input-group">
+                <input type="text" id="newProjectName" placeholder="Project name...">
+            </div>
+            <textarea id="newProjectDescription" placeholder="Project description..."></textarea>
+            <button class="btn" onclick="createProject()">Create Project</button>
+        </div>
+    </div>
+
     <div id="projectSettingsModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -321,7 +265,25 @@
         </div>
     </div>
 
-    <!-- Confirmation Modal -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content help-modal-content">
+            <div class="modal-header">
+                <h2>Help & User Guide</h2>
+                <span class="close-btn" onclick="closeModal('helpModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <h3>Quick Start</h3>
+                <ol>
+                    <li><strong>Create a Project:</strong> Click "New Project" to start organizing your work</li>
+                    <li><strong>Add Briefs:</strong> Create project briefs with propositions and client requirements</li>
+                    <li><strong>Develop Ideas:</strong> Drag briefs to create linked notes and copy</li>
+                    <li><strong>Create Tasks:</strong> Drag any item to tasks to create actionable items</li>
+                    <li><strong>Prioritize:</strong> Use drag & drop to manage your top 3 priority tasks</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
     <div id="confirmModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -337,9 +299,9 @@
         </div>
     </div>
 
-<script src="modules/StorageManager.js"></script>
-<script src="modules/RichTextEditor.js"></script>
-<script src="modules/PomodoroTimer.js"></script>
-<script src="app.js"></script>
+    <script src="modules/StorageManager.js"></script>
+    <script src="modules/RichTextEditor.js"></script>
+    <script src="modules/PomodoroTimer.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
