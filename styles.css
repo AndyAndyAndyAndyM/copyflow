@@ -656,6 +656,17 @@ textarea {
   background: #f8f8f8;
   color: var(--color-button-primary);
 }
+#topThreeTasks,
+#otherTasks {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.global-task-item {
+    width: 100%;
+    box-sizing: border-box;
+}
 
 /* Pomodoro Timer */
 .pomodoro-timer {
