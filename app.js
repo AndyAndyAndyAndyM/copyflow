@@ -142,9 +142,9 @@ function renderGlobalTasks() {
         }
     });
     
-    if (topThreeTasks.length === 0) {
-        topThreeContainer.innerHTML = '<div class="task-drop-zone">Drop your most important tasks here</div>';
-    }
+   if (topThreeTasks.length === 0) {
+    topThreeContainer.innerHTML = 'Drop your most important tasks here';
+}
     
     // Get all other tasks from all projects
     const allProjects = StorageManager.getAllProjects();
@@ -162,9 +162,9 @@ function renderGlobalTasks() {
         });
     });
     
-    if (otherTasksContainer.children.length === 0) {
-        otherTasksContainer.innerHTML = '<div class="task-drop-zone">All other tasks appear here</div>';
-    }
+   if (otherTasksContainer.children.length === 0) {
+    otherTasksContainer.innerHTML = 'All other tasks appear here';
+}
     
     console.log('Rendered global tasks');
 }
