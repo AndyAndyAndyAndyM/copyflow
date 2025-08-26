@@ -1,4 +1,4 @@
-// PomodoroTimer.js - Simplified Working Version
+// PomodoroTimer.js - Simplified Working Version with ESC key handling
 
 // Global timer state
 window.pomodoroState = {
@@ -38,6 +38,15 @@ function initializePomodoroTimer() {
     
     // Setup keyboard shortcuts
     document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            // Exit focus mode if active
+            if (window.pomodoroState.isFocusMode) {
+                exitPomodoroFocusMode();
+                pausePomodoroTimer(); // Also pause timer when exiting focus mode
+                return; // Don't let other ESC handlers run
+            }
+        }
+        
         if (isEditorOpen()) {
             if (e.code === 'Space' && !isInInputField(e.target)) {
                 e.preventDefault();
@@ -213,15 +222,9 @@ function completePomodoroSession() {
 function enterPomodoroFocusMode() {
     if (window.pomodoroState.isFocusMode || !isEditorOpen()) return;
     
-    console.log('Attempting to enter focus mode...');
-    console.log('Editor modal element:', timerElements.editorModal);
-    
     // Apply fullscreen styles
     if (timerElements.editorModal) {
         timerElements.editorModal.classList.add('true-fullscreen');
-        console.log('Added true-fullscreen class');
-    } else {
-        console.error('Editor modal element not found');
     }
     
     window.pomodoroState.isFocusMode = true;
@@ -235,12 +238,9 @@ function enterPomodoroFocusMode() {
 function exitPomodoroFocusMode() {
     if (!window.pomodoroState.isFocusMode) return;
     
-    console.log('Exiting focus mode...');
-    
     // Remove fullscreen styles
     if (timerElements.editorModal) {
         timerElements.editorModal.classList.remove('true-fullscreen');
-        console.log('Removed true-fullscreen class');
     }
     
     window.pomodoroState.isFocusMode = false;
@@ -289,32 +289,19 @@ function updatePomodoroCounts() {
 }
 
 function updateEditorHeader() {
-    console.log('Updating editor header...');
-    console.log('Editor header element:', timerElements.editorHeader);
-    console.log('Timer running:', window.pomodoroState.isRunning);
-    console.log('Current session:', window.pomodoroState.currentSession);
-    
-    if (!timerElements.editorHeader) {
-        console.error('Editor header element not found');
-        return;
-    }
+    if (!timerElements.editorHeader) return;
     
     // Remove existing classes
     timerElements.editorHeader.classList.remove('pomodoro-active', 'pomodoro-break');
-    console.log('Removed existing pomodoro classes');
     
     // Add appropriate class
     if (window.pomodoroState.isRunning) {
         if (window.pomodoroState.currentSession === 'work') {
             timerElements.editorHeader.classList.add('pomodoro-active');
-            console.log('Added pomodoro-active class');
         } else {
             timerElements.editorHeader.classList.add('pomodoro-break');
-            console.log('Added pomodoro-break class');
         }
     }
-    
-    console.log('Final header classes:', timerElements.editorHeader.className);
 }
 
 // Notifications
