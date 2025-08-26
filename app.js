@@ -197,7 +197,12 @@ function renderGlobalTasks() {
         otherTasksContainer.innerHTML = 'All other tasks appear here';
         otherTasksContainer.style.minHeight = '60px';
         otherTasksContainer.style.display = 'flex';
-        otherTasksContainer.style.alignItems = 'cen
+        otherTasksContainer.style.alignItems = 'center';
+        otherTasksContainer.style.justifyContent = 'center';
+    }
+    
+    console.log('Rendered global tasks');
+}
 
 function createGlobalTaskElement(task, projectId) {
     const div = document.createElement('div');
